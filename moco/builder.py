@@ -1,6 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-import torch
-import torch.nn as nn
+from plasma.modules import *
 
 
 class MoCo(nn.Module):
@@ -23,8 +22,19 @@ class MoCo(nn.Module):
 
         # create the encoders
         # num_classes is the output fc dimension
-        self.encoder_q = base_encoder(num_classes=dim)
-        self.encoder_k = base_encoder(num_classes=dim)
+        encoder_q = base_encoder(num_classes=dim)
+        encoder_q.conv1 = nn.Sequential(*[
+            Normalization(),
+            nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=5, bias=False),
+        ])
+        self.encoder_q = encoder_q
+
+        encoder_k = base_encoder(num_classes=dim)
+        encoder_k.conv1 = nn.Sequential(*[
+            Normalization(),
+            nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=5, bias=False),
+        ])
+        self.encoder_k = encoder_k
 
         if mlp:  # hack: brute-force replacement
             dim_mlp = self.encoder_q.fc.weight.shape[1]
